@@ -1,7 +1,7 @@
 import csv
 import unittest
 from collections import defaultdict
-
+import heapq
 # el programa deberá calcular el ganador de votos validos considerando que los siguientes datos son proporcionados:
 #
 # provincia,distrito,dni,candidato,esvalido
@@ -20,44 +20,35 @@ class CalculaGanador:
                 data.append( fila)
         return data
 
+    def checkDni(self, dni):
+        if len(dni) != 8:
+            return False
+        if not dni.isdigit():
+            return False
+        return True
+
     def calcularganador(self, data):
         votosxcandidato = defaultdict(int)
-
-        max_votos = 0
-        ganadores = []
+        totalVotos = 0
 
         for fila in data:
             candidato = fila[4]
+            dni = fila[3]
             voto_valido = fila[5] == '1'
-
-            if voto_valido:
+            #si el voto y el dni son validos se aumentan los votos por candidato y total de votos
+            if voto_valido and self.checkDni(dni):
+                totalVotos+=1
                 votosxcandidato[candidato] += 1
-                votos = votosxcandidato[candidato]
 
-                if votos > max_votos:
-                    max_votos = votos
-                    ganadores = [candidato]
-                elif votos == max_votos:
-                    ganadores.append(candidato)
-
-        """ for candidato, votos in votosxcandidato.items():
-            print(f"Candidato: {candidato}, Votos válidos: {votos}") """
-
-        return ganadores
-
-#c = CalculaGanador()
-#c.calcularvotos(c.leerdatos())
-
-datatest = [
-['Áncash', 'Asunción', 'Acochaca', '40810062', 'Eddie Hinesley', '0'],
-['Áncash', 'Asunción', 'Acochaca', '57533597', 'Eddie Hinesley', '1'],
-['Áncash', 'Asunción', 'Acochaca', '86777322', 'Aundrea Grace', '1'],
-['Áncash', 'Asunción', 'Acochaca', '23017965', 'Aundrea Grace', '1']
-]
-#print(c.calcularganador(datatest))
+        ganadores = heapq.nlargest(2, votosxcandidato, key=votosxcandidato.get) #se extraen los dos candidatos más votados
+        if votosxcandidato[ganadores[0]] / totalVotos >= 0.5:
+            #devuelve el primer candidato en llegar al 50% de votos
+            return [ganadores[0]]
+        else:
+            #Si ninguno de los candidatos llego al 50% se devuelve una lista con ambos
+            return ganadores
 
 #Se creo la siguiente clase TestCalculaGanador para que en tres funciones se realicen los tests.
-
 class TestCalculaGanador(unittest.TestCase):
 
     def test_calcularganador_uno(self):
